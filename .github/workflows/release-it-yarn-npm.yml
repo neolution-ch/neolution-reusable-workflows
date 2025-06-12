@@ -14,13 +14,12 @@ on:
       dry-run:
         type: boolean
         description: "Dry Run"
-        required: false
-        default: false
+        required: true
       publish-to-github-packages:
         type: boolean
         description: "Publish to GitHub Packages"
         required: false
-        default: true
+        default: false
     secrets:
       github-token:
         description: "GitHub Token"
