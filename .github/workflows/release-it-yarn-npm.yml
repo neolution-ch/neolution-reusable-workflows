@@ -20,6 +20,9 @@ on:
       github-token:
         description: "GitHub Token"
         required: true
+      npm-token:
+        description: "NPM Token"
+        required: true
       release-bot-app-id:
         description: "Release Bot App ID"
         required: true
