@@ -48,18 +48,17 @@ jobs:
           fetch-depth: 0
 
       - name: initialize mandatory git config
-        shell: bash
         run: |
           git config user.name "GitHub Release Bot"
           git config user.email release-bot@neolution.ch
 
+      - run: corepack enable
+
       - name: install yarn packages
-        shell: bash
         run: |
           yarn --frozen-lockfile
 
       - name: set NPM Token
-        shell: bash
         run: |
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
@@ -68,7 +67,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.github-token }}
 
       - name: run release-it
-        shell: bash
         run: |
           params=()
 
@@ -93,5 +91,4 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: publish to github packages
-        shell: bash
         run: npm publish --registry=https://npm.pkg.github.com/
