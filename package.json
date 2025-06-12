@@ -1,0 +1,7 @@
+{
+  "name": "neolution-reusable-workflows",
+  "packageManager": "yarn@4.6.0",
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}

@@ -1,0 +1,94 @@
+﻿name: "release-it-yarn-npm"
+
+on:
+  workflow_call:
+    inputs:
+      version-type:
+        type: string
+        description: "Semantic Version Type"
+        required: true
+      pre-release-channel:
+        type: string
+        description: "Pre Release channel"
+        required: true
+      dry-run:
+        type: boolean
+        description: "Dry Run"
+        required: false
+        default: false
+    secrets:
+      github-token:
+        description: "GitHub Token"
+        required: true
+      release-bot-app-id:
+        description: "Release Bot App ID"
+        required: true
+      release-bot-app-private-key:
+        description: "Release Bot App Private Key"
+        required: true
+
+jobs:
+  release-it-yarn-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tibdex/github-app-token@v2
+        id: generate-token
+        with:
+          app_id: ${{ secrets.release-bot-app-id }}
+          private_key: ${{ secrets.release-bot-app-private-key }}
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          # we need everything so release-it can compare the current version with the latest tag
+          fetch-depth: 0
+
+      - name: initialize mandatory git config
+        shell: bash
+        run: |
+          git config user.name "GitHub Release Bot"
+          git config user.email release-bot@neolution.ch
+
+      - name: install yarn packages
+        shell: bash
+        run: |
+          yarn --frozen-lockfile
+
+      - name: set NPM Token
+        shell: bash
+        run: |
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.npm-token }}
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+
+      - name: run release-it
+        shell: bash
+        run: |
+          params=()
+
+          if [[ ${{ inputs.version-type }} != "no-version-update" ]]; then
+            params+=(${{ inputs.version-type }})
+          fi
+
+          if [[ ${{ inputs.pre-release-channel }} != "stable" ]]; then
+            params+=(--preRelease=${{ inputs.pre-release-channel }})
+            params+=(--plugins.@release-it/keep-a-changelog.keepUnreleased)
+            params+=(--no-plugins.@release-it/keep-a-changelog.strictLatest)
+          fi
+
+          if [[ ${{ inputs.dry-run }} == "true" ]]; then
+            params+=(--dry-run)
+          fi
+
+          params+=(--ci)
+
+          yarn release-it "${params[@]}"
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: publish to github packages
+        shell: bash
+        run: npm publish --registry=https://npm.pkg.github.com/
