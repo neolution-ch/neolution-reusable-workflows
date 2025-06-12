@@ -16,6 +16,11 @@ on:
         description: "Dry Run"
         required: false
         default: false
+      publish-to-github-packages:
+        type: boolean
+        description: "Publish to GitHub Packages"
+        required: false
+        default: true
     secrets:
       github-token:
         description: "GitHub Token"
@@ -91,4 +96,5 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: publish to github packages
+        if: ${{ github.event.inputs.publish-to-github-packages == 'true' }}
         run: npm publish --registry=https://npm.pkg.github.com/
